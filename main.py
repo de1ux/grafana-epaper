@@ -7,12 +7,13 @@ libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__)
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
-WAIT_FOR_N_CANVAS_PAINTED = int(os.getenv("WAIT_FOR_N_CANVAS_PAINTED", "1"))
+WAIT_FOR_N_CANVAS_PAINTED = int(os.getenv("WAIT_FOR_N_CANVAS_PAINTED", "10"))
+WAIT_FOR_N_SECONDS = int(os.getenv("WAIT_FOR_N_SECONDS", "0"))
 GRAFANA_URL = os.getenv("GRAFANA_URL")
 DEBUG = os.getenv("DEBUG")
 if DEBUG:
-    WIDTH = 1200
-    HEIGHT = 800
+    WIDTH = 1304
+    HEIGHT = 984
 else:
     # allow local development
     import epd12in48b
@@ -31,9 +32,6 @@ import asyncio
 from pyppeteer import launch
 
 async def main():
-
-
-
     while True:
         while True:
             failed = False
@@ -51,6 +49,10 @@ async def main():
 
             canvii = 0
             attempts = 0
+            if WAIT_FOR_N_SECONDS:
+                await asyncio.sleep(WAIT_FOR_N_SECONDS)
+
+
             while canvii < WAIT_FOR_N_CANVAS_PAINTED:
                 canvii = await page.evaluate("""() => {
                     try {
@@ -59,7 +61,13 @@ async def main():
                     } catch {}
                     return document.querySelectorAll('canvas').length
                 }""")
-                await asyncio.sleep(1)
+
+                print("evaluated")
+                if WAIT_FOR_N_SECONDS:
+                    break
+                else:
+                    await asyncio.sleep(1)
+
                 print(f"Loaded {canvii} of {WAIT_FOR_N_CANVAS_PAINTED} canvases")
                 attempts += 1
                 if attempts > 20:
