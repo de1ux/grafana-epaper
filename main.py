@@ -3,12 +3,14 @@
 import io
 import sys
 import os
+import datetime
 libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
 WAIT_FOR_N_CANVAS_PAINTED = int(os.getenv("WAIT_FOR_N_CANVAS_PAINTED", "10"))
-WAIT_FOR_N_SECONDS = int(os.getenv("WAIT_FOR_N_SECONDS", "0"))
+WAIT_FOR_N_SECONDS_GRAFANA_JAVASCRIPT = int(os.getenv("WAIT_FOR_N_SECONDS_GRAFANA_JAVASCRIPT", "0"))
+WAIT_FOR_N_SECONDS_GRAFANA_HTTP = int(os.getenv("WAIT_FOR_N_SECONDS_GRAFANA_HTTP", "120"))
 GRAFANA_URL = os.getenv("GRAFANA_URL")
 DEBUG = os.getenv("DEBUG")
 if DEBUG:
@@ -29,11 +31,16 @@ import PIL.ImageOps
 
 from PIL import Image
 import asyncio
+import pyppeteer
 from pyppeteer import launch
+
+pyppeteer.DEBUG = True
 
 async def main():
     while True:
         while True:
+            start = datetime.datetime.now()
+
             failed = False
 
             if os.getenv("CHROMIUM_PATH"):
@@ -44,13 +51,13 @@ async def main():
             print("Getting grafana image...")
 
             page = await browser.newPage()
-            await page.goto(GRAFANA_URL)
+            await page.goto(GRAFANA_URL, {'timeout': WAIT_FOR_N_SECONDS_GRAFANA_HTTP * 1000})
             await page.setViewport({'width': WIDTH, 'height': HEIGHT})
 
             canvii = 0
             attempts = 0
-            if WAIT_FOR_N_SECONDS:
-                await asyncio.sleep(WAIT_FOR_N_SECONDS)
+            if WAIT_FOR_N_SECONDS_GRAFANA_JAVASCRIPT:
+                await asyncio.sleep(WAIT_FOR_N_SECONDS_GRAFANA_JAVASCRIPT)
 
 
             while canvii < WAIT_FOR_N_CANVAS_PAINTED:
@@ -63,7 +70,7 @@ async def main():
                 }""")
 
                 print("evaluated")
-                if WAIT_FOR_N_SECONDS:
+                if WAIT_FOR_N_SECONDS_GRAFANA_JAVASCRIPT:
                     break
                 else:
                     await asyncio.sleep(1)
@@ -111,10 +118,9 @@ async def main():
         epd.display(inverted_image, Blackimage2)
 
         print("Writing grafana image...done")
-        """
-        epd.clear()
-        epd.EPD_Sleep()
-        """
+        end = datetime.datetime.now()
+
+        print(f"Total refresh duration: {end - start}")
 
 
 asyncio.get_event_loop().run_until_complete(main())

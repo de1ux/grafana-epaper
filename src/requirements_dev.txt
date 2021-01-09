@@ -1,0 +1,2 @@
+Pillow==5.4.1
+pyppeteer==0.2.2
