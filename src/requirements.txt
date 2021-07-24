@@ -1,4 +1,0 @@
-Pillow==5.4.1
-pyppeteer==0.2.2
-RPi.GPIO==0.7.0
-spidev==3.5

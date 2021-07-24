@@ -1,2 +1,4 @@
 .pio
+.idea
+__pycache__
 CMakeListsPrivate.txt
